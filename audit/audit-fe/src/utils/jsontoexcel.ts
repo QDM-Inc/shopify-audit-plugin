@@ -2,12 +2,10 @@ let xlsx = require("json-as-xlsx");
 export const convertFromJsonToXls = (data: JSON) => {
   let tableinfo = [
     {
-      sheet: "Customers",
+      sheet: "Overview",
       columns: [
-        { label: "User", value: "first_name" },
-        { label: "Email", value: "email" },
-        { label: "Orders quantity", value: "orders_count" },
-        { label: "Total spent", value: "total_spent" },
+        { label: "Metrics name", value: "name" },
+        { label: "Metrics value", value: "value" },
       ],
       content: data,
     },

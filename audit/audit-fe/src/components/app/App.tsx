@@ -11,20 +11,17 @@ function App() {
   const getReport = async () => {
     setReportState("pending");
 
-    // timeout set to check loading state
-    setTimeout(async () => {
-      const response = await fetch(apiURL);
+    const response = await fetch(apiURL);
 
-      if (response.status === 200) {
-        const data = response.json();
-        data.then((res) => {
-          setReportState("success");
-          convertFromJsonToXls(res.customers);
-        });
-      } else {
-        setReportState("failure");
-      }
-    }, 3000);
+    if (response.status === 200) {
+      const data = response.json();
+      data.then((res) => {
+        setReportState("success");
+        convertFromJsonToXls(res);
+      });
+    } else {
+      setReportState("failure");
+    }
   };
 
   const handleClick = () => {
