@@ -75,7 +75,7 @@ const convertUTCToLocalTime = (date) => {
   return localDate.toLocaleString("en-US", options);
 };
 
-app.get("/customers", async (req, res) => {
+app.get("/report", async (req, res) => {
   //customers
   const customers_data = await getResponseByParameter("customers.json");
   const customers = customers_data.customers;

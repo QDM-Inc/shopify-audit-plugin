@@ -1,32 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import Button from "../button/button";
 import styles from "./App.module.css";
 import { LoadingState } from "../button/button";
-import { convertFromJsonToXls } from "../../utils/jsontoexcel";
 
-const apiURL = "customers";
+export interface AppProps {
+  reportState: LoadingState;
+  handleClick: () => void;
+}
 
-function App() {
-  const [reportState, setReportState] = useState<LoadingState>("");
-  const getReport = async () => {
-    setReportState("pending");
-
-    const response = await fetch(apiURL);
-
-    if (response.status === 200) {
-      const data = response.json();
-      data.then((res) => {
-        setReportState("success");
-        convertFromJsonToXls(res);
-      });
-    } else {
-      setReportState("failure");
-    }
-  };
-
-  const handleClick = () => {
-    getReport();
-  };
+export const App = (props: AppProps) => {
+  const { reportState, handleClick } = props;
 
   const defaultTitle = "To get all of your store audit";
   const pendingTitle = "Figuring out the report...";
@@ -52,6 +35,6 @@ function App() {
       <Button state={reportState} onClick={handleClick} />
     </div>
   );
-}
+};
 
 export default App;
