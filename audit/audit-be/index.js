@@ -41,7 +41,7 @@ const getTotalSales = (orders) => {
     const total = sales.reduce((acc, val) => {
       return acc + val;
     }, 0);
-    console.timeLog();
+
     return total.toFixed(2);
   } else {
     return "No orders found";
@@ -75,11 +75,30 @@ const convertUTCToLocalTime = (date) => {
   return localDate.toLocaleString("en-US", options);
 };
 
+const processCustomersData = (data) => {
+  for (let customer in data) {
+    if (data[customer].orders_count > 1) {
+      data[customer]["type"] = "Returning";
+    } else {
+      data[customer]["type"] = "First-time";
+    }
+  }
+  return data;
+};
+
+const getAOV = (data) => {
+  for (let customer in data) {
+    data[customer]["aov"] =
+      data[customer].total_spent / data[customer].orders_count;
+  }
+  return data;
+};
+
 app.get("/report", async (req, res) => {
   //customers
   const customers_data = await getResponseByParameter("customers.json");
   const customers = customers_data.customers;
-
+  const customersWithTypesAndAOV = getAOV(processCustomersData(customers));
   //shop
   const shop_data = await getResponseByParameter(
     "shop.json?fields=name,created_at"
@@ -119,6 +138,9 @@ app.get("/report", async (req, res) => {
   const products_data_first_week = await getResponseByParameter(
     `products.json?created_at_max=${firstWeekDate}`
   );
+
+  //marketing events
+  const marketing_data = await getResponseByParameter("marketing_events.json");
 
   const report = [
     { name: "Your total customers", value: customers.length },
@@ -171,5 +193,10 @@ app.get("/report", async (req, res) => {
     },
   ];
 
-  res.json(report);
+  const report1 = [
+    { customers: customersWithTypesAndAOV },
+    { orders: customersWithTypesAndAOV },
+  ];
+
+  res.json(report1);
 });
