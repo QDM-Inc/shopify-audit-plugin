@@ -5,15 +5,10 @@ from utils import get_response_by_parameter
 from report_service import process_customers_data, get_total_sales, \
     convert_utc_to_local_time, get_first_order_date, get_order_dates_by_customer_id, convert_ISO_to_month
 
-
-
-
 app = Flask(__name__)
 
 if __name__ == '__main__':
     app.run(port=5000)
-    while True: 
-        time.sleep(30)
 
 
 @app.route('/report')
