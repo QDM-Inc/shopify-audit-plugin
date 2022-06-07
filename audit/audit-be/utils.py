@@ -1,6 +1,9 @@
 import requests
 
-from app import baseURL, apiVersion
+# from app import baseURL, apiVersion
+
+baseURL = "data-oauth-store.myshopify.com"
+apiVersion = "admin/api/2021-10"
 
 def get_response_by_parameter(parameter):
     response = requests.get(
