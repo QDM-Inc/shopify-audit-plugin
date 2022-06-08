@@ -12,6 +12,7 @@ if __name__ == '__main__':
 
 
 @app.route('/report')
+
 def get_report():
     customers_data = get_response_by_parameter("customers.json")
     customers = customers_data.customers
