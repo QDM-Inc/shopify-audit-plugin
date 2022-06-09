@@ -34,9 +34,31 @@ export const convertFromJsonToXls = (data: any) => {
     {
       sheet: "Sales - Unique Orders",
       columns: [
-        { label: "Customer ID", value: "id", format: "#" },
+        { label: "Order name", value: "name" },
+        { label: "Month", value: "created_at", format: "#" },
+        { label: "Order ID", value: "id", format: "#" },
+        { label: "Sale kind", value: "sale_kind" },
+        { label: "Customer ID", value: "customer.id", format: "#" },
         { label: "Customer Email", value: "email" },
-        { label: "Customer type", value: "type" },
+        { label: "Customer type", value: "customer.type" },
+        { label: "# of Items", value: "items_count", format: "#" },
+        { label: "Ordered Amount", value: "total_price", format: "$0.00" },
+        {
+          label: "# of Sales",
+          value: "orders_count",
+          format: "#",
+        },
+        { label: "# of Old Sales", value: "sales_before", format: "#" },
+        {
+          label: "Total Orders",
+          value: "customer.orders_count",
+          format: "#",
+        },
+        {
+          label: "Most Recent Order Date",
+          value: "most_recent_order_date",
+          format: "mmm-yy",
+        },
       ],
       content: data[1].orders,
     },

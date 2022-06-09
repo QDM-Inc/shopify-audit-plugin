@@ -72,3 +72,29 @@ def get_order_dates_by_customer_id(orders):
       return 'order price<0'
   return dict
 
+
+def group_orders_by_customer_id(orders):
+  dict = {}
+  for item in orders:
+    customerId = orders[item]['customer']['id']
+    if customerId in dict:
+      dict[customerId] = [
+        { "id": orders[item]['id'], "created_at": (orders[item]['created_at']) }]
+    else: 
+      dict[customerId].append({
+        "id": orders[item]['id'],
+        "created_at": orders[item]['created_at'],
+      })
+      dict[customerId].sort(key=lambda x: x['created_at'])
+    
+  
+  return dict
+
+
+def get_previous_order_date_by_order_id (ordersObj, orderId):
+  for item in ordersObj:
+    if len(ordersObj[item]) > 1:
+      for i in range(len(ordersObj[item])-1, -1, -1):
+        if ordersObj[item][i]['id'] == orderId:
+          return ordersObj[item][i - 1]['created_at']
+

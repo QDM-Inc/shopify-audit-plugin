@@ -3,7 +3,7 @@ from time import time
 from flask import Flask, jsonify
 from utils import get_response_by_parameter
 from report_service import process_customers_data, get_total_sales, \
-    convert_utc_to_local_time, get_first_order_date, get_order_dates_by_customer_id, convert_ISO_to_month
+    convert_utc_to_local_time, get_first_order_date, get_order_dates_by_customer_id, convert_ISO_to_month, get_previous_order_date_by_order_id, group_orders_by_customer_id
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -34,17 +34,18 @@ def get_report():
     last_month_begin_date = datetime(now_date.year, now_date.month, 1)
    
     orders_data = get_response_by_parameter("orders.json?status=any")
-    orders = orders_data.orders
+    orders = orders_data['orders']
     orders_data_first_month = get_response_by_parameter("orders.json?created_at_max=".concat(first_month_end_date))
     orders_data_last_month = get_response_by_parameter("orders.json?created_at_min=".concat(last_month_begin_date))
 
     products_data = get_response_by_parameter("products.json")
-    products = products_data.products
+    products = products_data['products']
     products_data_first_week = get_response_by_parameter("products.json?created_at_max=".concat(first_week_date))
 
     marketing_data = get_response_by_parameter("marketing_events.json")
 
     order_dates_by_customer_id = get_order_dates_by_customer_id(orders)
+    orders_by_customer_id = group_orders_by_customer_id(orders)
 
 
     def new_orders():
@@ -61,6 +62,14 @@ def get_report():
                     customers_with_types_and_aov[index]['aov'] = customers_with_types_and_aov[index]['total_spent'] / customers_with_types_and_aov[index]["kept_total"]
             
             orders[item]['created_at'] = convert_ISO_to_month(orders[item]['created_at'])
+            orders[item]["items_count"] = float(len(orders[item]['line_items']))
+            orders[item]['total_price'] = float(orders[item]['total_price'])
+            if(len(orders[item]['refunds']) > 0): 
+                orders[item]["sale_kind"] = "refund" 
+            else: orders[item]["sale_kind"] = "order"
+
+            orders[item]["most_recent_order_date"] = convert_ISO_to_month(get_previous_order_date_by_order_id(orders_by_customer_id, orders[item]['id']))
+      
         
         return orders
   
