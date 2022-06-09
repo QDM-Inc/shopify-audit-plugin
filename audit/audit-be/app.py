@@ -4,8 +4,11 @@ from flask import Flask, jsonify
 from utils import get_response_by_parameter
 from report_service import process_customers_data, get_total_sales, \
     convert_utc_to_local_time, get_first_order_date, get_order_dates_by_customer_id, convert_ISO_to_month
+import sys
+
 
 app = Flask(__name__)
+
 
 if __name__ == '__main__':
     app.run(port=5000)
@@ -15,9 +18,10 @@ if __name__ == '__main__':
 
 def get_report():
     customers_data = get_response_by_parameter("customers.json")
-    customers = customers_data.customers
-    customers_with_types_and_aov = process_customers_data(customers)
+    customers_list = customers_data["customers"]
 
+   
+    customers_with_types_and_aov = process_customers_data(customers_list)
     shop_data = get_response_by_parameter("shop.json?fields=name,created_at")
 
     store_creation_date = datetime.fromisoformat(shop_data.shop.created_at)
@@ -44,40 +48,40 @@ def get_report():
     def new_orders():
         for item in orders:
             for index in customers_with_types_and_aov:
-                if orders[item].customer.id == customers_with_types_and_aov[index].id:
-                    orders[item].customer["type"] = customers_with_types_and_aov[index].type
+                if orders[item]['customer']['id'] == customers_with_types_and_aov[index]['id']:
+                    orders[item]['customer']["type"] = customers_with_types_and_aov[index]['type']
                 
-                customers_with_types_and_aov[index]["returns_count"] = float(len(orders[item].refunds))
+                customers_with_types_and_aov[index]["returns_count"] = float(len(orders[item]['refunds']))
 
-                customers_with_types_and_aov[index]["kept_total"] = float(customers_with_types_and_aov[index].orders_count) - float(customers_with_types_and_aov[index]["returns_count"])
+                customers_with_types_and_aov[index]["kept_total"] = float(customers_with_types_and_aov[index]['orders_count']) - float(customers_with_types_and_aov[index]["returns_count"])
 
-                if orders[item].total_price > 0:
-                    customers_with_types_and_aov[index].aov = customers_with_types_and_aov[index].total_spent / customers_with_types_and_aov[index]["kept_total"]
+                if orders[item]['total_price'] > 0:
+                    customers_with_types_and_aov[index]['aov'] = customers_with_types_and_aov[index]['total_spent'] / customers_with_types_and_aov[index]["kept_total"]
             
-            orders[item].created_at = convert_ISO_to_month(orders[item].created_at)
+            orders[item]['created_at'] = convert_ISO_to_month(orders[item]['created_at'])
         
         return orders
   
     def new_customers():
         for index in customers_with_types_and_aov:
             item = customers_with_types_and_aov[index]
-            item.total_spent = float(item.total_spent)
-            if item.id in order_dates_by_customer_id:
-                item.recent_purchase = convert_utc_to_local_time(order_dates_by_customer_id[item.id][0])
-                item.first_purchase = convert_utc_to_local_time(order_dates_by_customer_id[item.id][-1])
+            item['total_spent'] = float(item['total_spent'])
+            if item['id'] in order_dates_by_customer_id:
+                item['recent_purchase'] = convert_utc_to_local_time(order_dates_by_customer_id[item['id']][0])
+                item['first_purchase'] = convert_utc_to_local_time(order_dates_by_customer_id[item['id']][-1])
                         
         return customers_with_types_and_aov
     
 
-    report = [ { 'name': "Your total customers", 'value': float(len(customers)) },
+    report = [ { 'name': "Your total customers", 'value': float(len(customers_list)) },
     {
       'name': "What you've made in sales ($)",
       'value': get_total_sales(new_orders()),
     },
-    { 'name': "Your shop name", 'value': shop_data.shop.name },
+    { 'name': "Your shop name", 'value': shop_data['shop']['name'] },
     {
       'name': "Your shop was created on",
-      'value': convert_utc_to_local_time(shop_data.shop.created_at),
+      'value': convert_utc_to_local_time(shop_data['shop']['created_at']),
     },
     {
       'name': "You started with this amount of products:",
@@ -140,3 +144,4 @@ def get_report():
     { 'orders': new_orders() },
   ]
     return jsonify(report1)
+
