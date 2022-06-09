@@ -4,7 +4,9 @@ from flask import Flask, jsonify
 from utils import get_response_by_parameter
 from report_service import process_customers_data, get_total_sales, \
     convert_utc_to_local_time, get_first_order_date, get_order_dates_by_customer_id, convert_ISO_to_month
-import sys
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 app = Flask(__name__)
@@ -19,9 +21,9 @@ if __name__ == '__main__':
 def get_report():
     customers_data = get_response_by_parameter("customers.json")
     customers_list = customers_data["customers"]
-
    
     customers_with_types_and_aov = process_customers_data(customers_list)
+    app.logger.info(customers_with_types_and_aov)
     shop_data = get_response_by_parameter("shop.json?fields=name,created_at")
 
     store_creation_date = datetime.fromisoformat(shop_data.shop.created_at)
