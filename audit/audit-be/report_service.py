@@ -45,15 +45,15 @@ def convert_ISO_to_month(ISOdate):
 
 def process_customers_data(data):
     for customer in data:
-        if data[customer]['orders_count'] > 1:
-            data[customer]['type'] = 'Returning'
-        elif data[customer]['orders_count'] == 1:
-            data[customer]['type'] = 'First-time'
-        elif data[customer]['orders_count'] == 0:
-            data[customer]['type'] = "Haven't ordered yet"
-            data[customer]['recent_purchase'] = "Haven't ordered yet"
-            data[customer]['first_purchase'] = "Haven't ordered yet"
-            data[customer]['aov'] = 0
+        if customer['orders_count'] > 1:
+            customer['type'] = 'Returning'
+        elif customer['orders_count'] == 1:
+            customer['type'] = 'First-time'
+        elif customer['orders_count'] == 0:
+            customer['type'] = "Haven't ordered yet"
+            customer['recent_purchase'] = "Haven't ordered yet"
+            customer['first_purchase'] = "Haven't ordered yet"
+            customer['aov'] = 0
 
     return data
 

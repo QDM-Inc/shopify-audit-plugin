@@ -1,29 +1,28 @@
 from datetime import datetime
+from pprint import pprint
 from time import time
 from flask import Flask, jsonify
 from utils import get_response_by_parameter
 from report_service import process_customers_data, get_total_sales, \
-    convert_utc_to_local_time, get_first_order_date, get_order_dates_by_customer_id, convert_ISO_to_month, get_previous_order_date_by_order_id, group_orders_by_customer_id
+    convert_utc_to_local_time, get_first_order_date, get_order_dates_by_customer_id, convert_ISO_to_month, \
+    get_previous_order_date_by_order_id, group_orders_by_customer_id
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-
 app = Flask(__name__)
-
 
 if __name__ == '__main__':
     app.run(port=5000)
 
 
 @app.route('/report')
-
 def get_report():
     customers_data = get_response_by_parameter("customers.json")
     customers_list = customers_data["customers"]
-   
+
+    pprint(customers_list)
     customers_with_types_and_aov = process_customers_data(customers_list)
-    app.logger.info(customers_with_types_and_aov)
     shop_data = get_response_by_parameter("shop.json?fields=name,created_at")
 
     store_creation_date = datetime.fromisoformat(shop_data.shop.created_at)
@@ -32,7 +31,7 @@ def get_report():
     first_week_date = datetime(store_creation_date.year, store_creation_date.month, store_creation_date.day + 7)
     now_date = datetime.now()
     last_month_begin_date = datetime(now_date.year, now_date.month, 1)
-   
+
     orders_data = get_response_by_parameter("orders.json?status=any")
     orders = orders_data['orders']
     orders_data_first_month = get_response_by_parameter("orders.json?created_at_max=".concat(first_month_end_date))
@@ -47,32 +46,35 @@ def get_report():
     order_dates_by_customer_id = get_order_dates_by_customer_id(orders)
     orders_by_customer_id = group_orders_by_customer_id(orders)
 
-
     def new_orders():
         for item in orders:
             for index in customers_with_types_and_aov:
                 if orders[item]['customer']['id'] == customers_with_types_and_aov[index]['id']:
                     orders[item]['customer']["type"] = customers_with_types_and_aov[index]['type']
-                
+
                 customers_with_types_and_aov[index]["returns_count"] = float(len(orders[item]['refunds']))
 
-                customers_with_types_and_aov[index]["kept_total"] = float(customers_with_types_and_aov[index]['orders_count']) - float(customers_with_types_and_aov[index]["returns_count"])
+                customers_with_types_and_aov[index]["kept_total"] = float(
+                    customers_with_types_and_aov[index]['orders_count']) - float(
+                    customers_with_types_and_aov[index]["returns_count"])
 
                 if orders[item]['total_price'] > 0:
-                    customers_with_types_and_aov[index]['aov'] = customers_with_types_and_aov[index]['total_spent'] / customers_with_types_and_aov[index]["kept_total"]
-            
+                    customers_with_types_and_aov[index]['aov'] = customers_with_types_and_aov[index]['total_spent'] / \
+                                                                 customers_with_types_and_aov[index]["kept_total"]
+
             orders[item]['created_at'] = convert_ISO_to_month(orders[item]['created_at'])
             orders[item]["items_count"] = float(len(orders[item]['line_items']))
             orders[item]['total_price'] = float(orders[item]['total_price'])
-            if(len(orders[item]['refunds']) > 0): 
-                orders[item]["sale_kind"] = "refund" 
-            else: orders[item]["sale_kind"] = "order"
+            if (len(orders[item]['refunds']) > 0):
+                orders[item]["sale_kind"] = "refund"
+            else:
+                orders[item]["sale_kind"] = "order"
 
-            orders[item]["most_recent_order_date"] = convert_ISO_to_month(get_previous_order_date_by_order_id(orders_by_customer_id, orders[item]['id']))
-      
-        
+            orders[item]["most_recent_order_date"] = convert_ISO_to_month(
+                get_previous_order_date_by_order_id(orders_by_customer_id, orders[item]['id']))
+
         return orders
-  
+
     def new_customers():
         for index in customers_with_types_and_aov:
             item = customers_with_types_and_aov[index]
@@ -80,79 +82,77 @@ def get_report():
             if item['id'] in order_dates_by_customer_id:
                 item['recent_purchase'] = convert_utc_to_local_time(order_dates_by_customer_id[item['id']][0])
                 item['first_purchase'] = convert_utc_to_local_time(order_dates_by_customer_id[item['id']][-1])
-                        
+
         return customers_with_types_and_aov
-    
 
-    report = [ { 'name': "Your total customers", 'value': float(len(customers_list)) },
-    {
-      'name': "What you've made in sales ($)",
-      'value': get_total_sales(new_orders()),
-    },
-    { 'name': "Your shop name", 'value': shop_data['shop']['name'] },
-    {
-      'name': "Your shop was created on",
-      'value': convert_utc_to_local_time(shop_data['shop']['created_at']),
-    },
-    {
-      'name': "You started with this amount of products:",
-      'value': len(products_data_first_week[products]),
-    }, {
-        'name': "You've made your first sale on",
-        'value': convert_utc_to_local_time(get_first_order_date(orders))
-    }, {
-        'name': "In your first month you made:",
-        'value': get_total_sales(orders_data_first_month)
-    }, {
-        'name': "Last month you made",
-        'value': get_total_sales(orders_data_last_month)
-    }, 
-    # {
-    #     'name': "First purchase",
-    #     'value': ""
-    # }, {
-    #     'name': "100th purchase",
-    #     'value': ""
-    # }, {
-    #     'name': "Largest purchase",
-    #     'value': ""
-    # }, {
-    #     'name': "You hit ~$10k in sales on",
-    #     'value': ""
-    # }, {
-    #     'name': "1000th purchase",
-    #     'value': ""
-    # }, {
-    #     'name': "You hit ~$25k in sales on",
-    #     'value': ""
-    # }, {
-    #     'name': "You've made total sales for year:",
-    #     'value': ""
-    # }, {
-    #     'name': "These are your top selling products of all time:",
-    #     'value': "name, total sales, quantity, average quantity per month"
-    # }, {
-    #     'name': "Top product for top state",
-    #     'value': ""
-    # }, {
-    #     'name': "Top city for top state",
-    #     'value': ""
-    # }, {
-    #     'name': "What state is most likely to purchase in the middle of the night?",
-    #     'value': ""
-    # }, {
-    #     'name': "What city spends the most per person?",
-    #     'value': "city, avg per order, avg per all customers"
-    # }, {
-    #     'name': "People in this state are most likely to become Repeat customers:",
-    #     'value': ""
-    # }
-    ]
- 
+    report = [{'name': "Your total customers", 'value': float(len(customers_list))},
+              {
+                  'name': "What you've made in sales ($)",
+                  'value': get_total_sales(new_orders()),
+              },
+              {'name': "Your shop name", 'value': shop_data['shop']['name']},
+              {
+                  'name': "Your shop was created on",
+                  'value': convert_utc_to_local_time(shop_data['shop']['created_at']),
+              },
+              {
+                  'name': "You started with this amount of products:",
+                  'value': len(products_data_first_week[products]),
+              }, {
+                  'name': "You've made your first sale on",
+                  'value': convert_utc_to_local_time(get_first_order_date(orders))
+              }, {
+                  'name': "In your first month you made:",
+                  'value': get_total_sales(orders_data_first_month)
+              }, {
+                  'name': "Last month you made",
+                  'value': get_total_sales(orders_data_last_month)
+              },
+              # {
+              #     'name': "First purchase",
+              #     'value': ""
+              # }, {
+              #     'name': "100th purchase",
+              #     'value': ""
+              # }, {
+              #     'name': "Largest purchase",
+              #     'value': ""
+              # }, {
+              #     'name': "You hit ~$10k in sales on",
+              #     'value': ""
+              # }, {
+              #     'name': "1000th purchase",
+              #     'value': ""
+              # }, {
+              #     'name': "You hit ~$25k in sales on",
+              #     'value': ""
+              # }, {
+              #     'name': "You've made total sales for year:",
+              #     'value': ""
+              # }, {
+              #     'name': "These are your top selling products of all time:",
+              #     'value': "name, total sales, quantity, average quantity per month"
+              # }, {
+              #     'name': "Top product for top state",
+              #     'value': ""
+              # }, {
+              #     'name': "Top city for top state",
+              #     'value': ""
+              # }, {
+              #     'name': "What state is most likely to purchase in the middle of the night?",
+              #     'value': ""
+              # }, {
+              #     'name': "What city spends the most per person?",
+              #     'value': "city, avg per order, avg per all customers"
+              # }, {
+              #     'name': "People in this state are most likely to become Repeat customers:",
+              #     'value': ""
+              # }
+              ]
+
     report1 = [
-    { 'overview': report },
-    { 'customers': new_customers() },
-    { 'orders': new_orders() },
-  ]
+        {'overview': report},
+        {'customers': new_customers()},
+        {'orders': new_orders()},
+    ]
     return jsonify(report1)
-
