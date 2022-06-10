@@ -1,4 +1,5 @@
 from datetime import datetime
+from pprint import pprint
 
 import pytz
 
@@ -30,17 +31,19 @@ def get_first_order_date(orders):
 
 def convert_utc_to_local_time(utc_date):
     local_timezone = pytz.timezone('US/Eastern')
-    local_date = utc_date.replace(tzinfo=pytz.utc)
+    str_date = str(utc_date)
+    date_time_obj = datetime.strptime(str_date, "%Y-%m-%dT%H:%M:%S%z")
+    local_date = date_time_obj.replace(tzinfo=pytz.utc)
     local_date = local_date.astimezone(local_timezone)
     return local_date
 
     
 # check later with date-time
-def convert_ISO_to_month(ISOdate):
-    local_timezone = pytz.timezone('US/Eastern')
-    local_date = ISOdate.replace(tzinfo=pytz.utc)
-    local_date = local_date.astimezone(local_timezone)
-    return local_date
+# def convert_ISO_to_month(ISOdate):
+#     local_timezone = pytz.timezone('US/Eastern')
+#     local_date = ISOdate.replace(tzinfo=pytz.utc)
+#     local_date = local_date.astimezone(local_timezone)
+#     return local_date
 
 
 def process_customers_data(data):
@@ -60,10 +63,11 @@ def process_customers_data(data):
 def get_order_dates_by_customer_id(orders):
   dict = {}
   for item in orders: 
-    if orders[item]['total_price'] > 0:
-      customerId = orders[item]['customer']['id']
-      orderDates = datetime.fromisoformat((orders[item]['created_at']))
-      if customerId in dict:
+    
+    if float(item['total_price']) > 0:
+      customerId = item['customer']['id']
+      orderDates = datetime.fromisoformat((item['created_at']))
+      if not customerId in dict:
         dict[customerId] = [orderDates]
       else:
         dict[customerId].append(orderDates)
@@ -76,17 +80,16 @@ def get_order_dates_by_customer_id(orders):
 def group_orders_by_customer_id(orders):
   dict = {}
   for item in orders:
-    customerId = orders[item]['customer']['id']
-    if customerId in dict:
+    customerId = item['customer']['id']
+    if not customerId in dict:
       dict[customerId] = [
-        { "id": orders[item]['id'], "created_at": (orders[item]['created_at']) }]
+        { "id": item['id'], "created_at": (item['created_at']) }]
     else: 
       dict[customerId].append({
-        "id": orders[item]['id'],
-        "created_at": orders[item]['created_at'],
+        "id": item['id'],
+        "created_at": item['created_at'],
       })
       dict[customerId].sort(key=lambda x: x['created_at'])
-    
   
   return dict
 
