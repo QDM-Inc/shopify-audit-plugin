@@ -48,7 +48,6 @@ def get_report():
     def new_orders():
         for item in orders:
             # item["created_at"] = convert_utc_to_local_time(item["created_at"])
-            pprint(item)
             for index in customers_with_types_and_aov:
                 if item["customer"]["id"] == index["id"]:
                     item["customer"]["type"] = index["type"]
@@ -153,5 +152,6 @@ def get_report():
         {"overview": report},
         {"customers": new_customers()},
         {"orders": new_orders()},
+        {"name" : shop_data["shop"]["name"]}
     ]
     return jsonify(report1)
