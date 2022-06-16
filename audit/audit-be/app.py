@@ -1,14 +1,12 @@
 from datetime import datetime
-from pprint import pprint
-from time import time
 from flask import Flask, jsonify
 from utils import get_response_by_parameter
-from report_service import process_customers_data, get_total_sales, \
+from report_service import process_customers_data, \
     convert_utc_to_local_time, get_first_order_date, get_order_dates_by_customer_id, \
-    get_previous_order_params_by_order_id, group_orders_by_customer_id, get_next_order_params_by_order_id, get_sales_count_by_order_id
+    get_previous_order_params_by_order_id, group_orders_by_customer_id, get_next_order_params_by_order_id, get_total_sales, get_sales_count_by_order_id
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 
@@ -33,12 +31,12 @@ def get_report():
 
     orders_data = get_response_by_parameter("orders.json?status=any")
     orders = orders_data["orders"]
-    orders_data_first_month = get_response_by_parameter("orders.json?created_at_max="+f'{first_month_end_date}')
-    orders_data_last_month = get_response_by_parameter("orders.json?created_at_min="+f'{last_month_begin_date}')
+    orders_data_first_month = get_response_by_parameter("orders.json?created_at_max=" + f'{first_month_end_date}')
+    orders_data_last_month = get_response_by_parameter("orders.json?created_at_min=" + f'{last_month_begin_date}')
 
     products_data = get_response_by_parameter("products.json")
     products = products_data["products"]
-    products_data_first_week = get_response_by_parameter("products.json?created_at_max="+f'{first_week_date}')
+    products_data_first_week = get_response_by_parameter("products.json?created_at_max=" + f'{first_week_date}')
 
     # marketing_data = get_response_by_parameter("marketing_events.json")
 
@@ -47,8 +45,6 @@ def get_report():
 
     def new_orders():
         for item in orders:
-            
-            item["created_at"] = convert_utc_to_local_time(item["created_at"])
             for index in customers_with_types_and_aov:
                 if item["customer"]["id"] == index["id"]:
                     item["customer"]["type"] = index["type"]
@@ -63,38 +59,38 @@ def get_report():
 
             item["items_count"] = float(len(item["line_items"]))
             item["total_price"] = float(item["total_price"])
-            
-            if (len(item["refunds"]) > 0):
+
+            if len(item["refunds"]) > 0:
                 item["sale_kind"] = "refund"
             else:
                 item["sale_kind"] = "order"
 
             prev_orders_by_id = get_previous_order_params_by_order_id(orders_by_customer_id, item["id"])
             next_orders_by_id = get_next_order_params_by_order_id(orders_by_customer_id, item["id"])
-            
 
             if prev_orders_by_id is not None:
-                item["most_recent_order_date"] = convert_utc_to_local_time(prev_orders_by_id["date"])
+                item["most_recent_order_date"] = (prev_orders_by_id["date"])
                 item["most_recent_order_value"] = float(prev_orders_by_id["value"])
-                item["time_since_prev_sale"] = item["created_at"] - item["most_recent_order_date"]
+                item["time_since_prev_sale"] =  datetime.fromisoformat(item["created_at"]) - datetime.fromisoformat(item["most_recent_order_date"])
                 item["price_diff"] = item["total_price"] - item["most_recent_order_value"]
 
             if next_orders_by_id is not None:
-                item["next_order_date"] = convert_utc_to_local_time(next_orders_by_id["next_date"])
+                item["next_order_date"] = (next_orders_by_id["next_date"])
                 item["next_order_value"] = float(next_orders_by_id["next_value"])
-                item["months_after"] = item["created_at"] - item["next_order_date"]
+                item["months_after"] = datetime.fromisoformat(item["created_at"]) - datetime.fromisoformat(item["next_order_date"])
                 item["next_price_diff"] = item["total_price"] - item["next_order_value"]
-      
 
         return orders
 
     def new_customers():
         for index in customers_with_types_and_aov:
-            item = index
-            item["total_spent"] = float(item["total_spent"])
-            if item["id"] in order_dates_by_customer_id:
-                item["recent_purchase"] = convert_utc_to_local_time(order_dates_by_customer_id[item["id"]][0])
-                item["first_purchase"] = convert_utc_to_local_time(order_dates_by_customer_id[item["id"]][-1])
+            index["total_spent"] = float(index["total_spent"])
+            item = str(index["id"])
+
+            for customer_id in order_dates_by_customer_id:
+                if str(customer_id) == item:
+                    index["recent_purchase"] = order_dates_by_customer_id[customer_id][0]
+                    index["first_purchase"] = order_dates_by_customer_id[customer_id][-1]
 
         return customers_with_types_and_aov
 
@@ -114,13 +110,14 @@ def get_report():
               }, {
                   "name": "You've made your first sale on",
                   "value": get_first_order_date(orders)
-              }, {
-                  "name": "In your first month you made:",
-                  "value": get_total_sales(orders_data_first_month)
-              }, {
-                  "name": "Last month you made",
-                  "value": get_total_sales(orders_data_last_month)
               },
+              # {
+              #     "name": "In your first month you made:",
+              #     "value": get_total_sales(orders_data_first_month)
+              # }, {
+              #     "name": "Last month you made",
+              #     "value": get_total_sales(orders_data_last_month)
+              # },
               # {
               #     "name": "First purchase",
               #     "value": ""
@@ -163,10 +160,11 @@ def get_report():
               # }
               ]
 
-    report1 = [
+    report1 = {"data": [
         {"overview": report},
         {"customers": new_customers()},
         {"orders": new_orders()},
-        {"name" : f'{shop_data["shop"]["name"]} {now_date}'}
-    ]
+        {"name": f'{shop_data["shop"]["name"]} {now_date}'}
+    ]}
+
     return jsonify(report1)
