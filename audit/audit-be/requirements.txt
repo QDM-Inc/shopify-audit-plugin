@@ -1,3 +1,4 @@
 flask
 pytz
 requests
+PyJWT~=2.1.0

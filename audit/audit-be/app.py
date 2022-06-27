@@ -1,17 +1,15 @@
 from datetime import datetime
 from flask import Flask, jsonify
-from utils import get_response_by_parameter
-from report_service import process_customers_data, \
-    convert_utc_to_local_time, get_first_order_date, get_order_dates_by_customer_id, \
-    get_previous_order_params_by_order_id, group_orders_by_customer_id, get_next_order_params_by_order_id, get_total_sales, get_sales_count_by_order_id
-import logging
 
-# logging.basicConfig(level=logging.DEBUG)
+from shopify.routes import shopify_bp
+from utils.utils import get_response_by_parameter
+from services.report_service import process_customers_data, \
+    convert_utc_to_local_time, get_first_order_date, get_order_dates_by_customer_id, \
+    get_previous_order_params_by_order_id, group_orders_by_customer_id, get_next_order_params_by_order_id, get_total_sales
 
 app = Flask(__name__)
-
-if __name__ == "__main__":
-    app.run(port=5000)
+app.config.from_object('config.DevelopmentConfig')
+app.register_blueprint(shopify_bp)
 
 
 @app.route("/report")
