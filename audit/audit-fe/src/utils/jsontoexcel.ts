@@ -36,7 +36,7 @@ export const convertFromJsonToXls = (data: any) => {
       sheet: "Sales - Unique Orders",
       columns: [
         { label: "Order name", value: "name" },
-        { label: "Month", value: "created_at", format: "mmm-yy" },
+        { label: "Month", value: "created_at_month", format: "mmm-yy" },
         { label: "Order ID", value: "id", format: "#" },
         { label: "Sale kind", value: "sale_kind" },
         { label: "Customer ID", value: "customer.id", format: "#" },
@@ -53,8 +53,8 @@ export const convertFromJsonToXls = (data: any) => {
         },
         {
           label: "Most Recent Order Date",
-          value: "most_recent_order_date",
-          format: "mmm-yy",
+          value: "most_recent_order_date_value",
+          format: "d-mmm-yy",
         },
         {
           label: "Most Recent Order Value",
@@ -73,7 +73,7 @@ export const convertFromJsonToXls = (data: any) => {
         },
         {
           label: "Next Purchase Date",
-          value: "next_order_date",
+          value: "next_order_date_value",
           format: "d-mmm-yy",
         },
         {

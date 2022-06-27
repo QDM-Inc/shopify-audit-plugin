@@ -13,9 +13,10 @@ export const AppContainer = memo(() => {
 
     if (response.status === 200) {
       const data = response.json();
+
       data.then((res) => {
         setReportState("success");
-        convertFromJsonToXls(res);
+        convertFromJsonToXls(res.data);
       });
     } else {
       setReportState("failure");

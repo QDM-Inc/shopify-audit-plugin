@@ -1,5 +1,4 @@
 from datetime import datetime
-import time
 
 import pytz
 
@@ -30,17 +29,12 @@ def get_first_order_date(orders):
     for item in orders:
         # TODO: add fullfillment status on real store
         # if orders[item].fulfillment_status == 'fulfilled':
-        dates.append(item['created_at'])
+        dates.append(datetime.fromisoformat(item['created_at']))
     dates.sort()
     return dates[0]
 
-
-# check later with date-time
-# def convert_ISO_to_month(ISOdate):
-#     local_timezone = pytz.timezone('US/Eastern')
-#     local_date = ISOdate.replace(tzinfo=pytz.utc)
-#     local_date = local_date.astimezone(local_timezone)
-#     return local_date
+def get_month_of_order(date):
+    return f'{datetime.strptime(str(datetime.fromisoformat(date).month), "%m").strftime("%b")} {datetime.fromisoformat(date).year}'
 
 
 def process_customers_data(data):
