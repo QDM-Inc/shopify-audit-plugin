@@ -113,3 +113,28 @@ def get_sales_count_by_order_id(orders_obj, order_id):
         for i in range(0, len(orders_obj[item])):
             if orders_obj[item][i]["id"] == order_id:
                 return float(len(orders_obj[item]))
+
+def get_marketing_consent(item):
+    if item["marketing_opt_in_level"]=="confirmed_opt_in" and item["sms_marketing_consent"]["state"]=="subscribed":
+        return "sms, email"
+    if item["sms_marketing_consent"]["state"]=="subscribed" and item["marketing_opt_in_level"]== None:
+        return "sms"
+    if item["marketing_opt_in_level"]=="confirmed_opt_in" and item["sms_marketing_consent"]["state"]!="subscribed":
+        return "email"
+    
+    else: return "none"
+
+
+def count_contact_info(item):
+    counter=0
+    if item["email"] and item["phone"]:
+        return counter+2
+    if item["email"]:
+       return counter+1
+    if item["phone"]:
+       return counter+1
+    
+    else: return counter
+    
+    
+

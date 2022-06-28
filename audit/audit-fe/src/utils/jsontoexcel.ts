@@ -29,6 +29,12 @@ export const convertFromJsonToXls = (data: any) => {
         },
         { label: "Total sales", value: "total_spent", format: "$0.00" },
         { label: "AOV", value: "aov", format: "$0.00" },
+        {
+          label: "Marketing consent (email/sms)",
+          value: "marketing_consent",
+          format: "#",
+        },
+        { label: "Contact info", value: "contact_info", format: "#" },
       ],
       content: data[1].customers,
     },

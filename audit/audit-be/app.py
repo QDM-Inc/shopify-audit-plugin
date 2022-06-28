@@ -1,13 +1,14 @@
 from datetime import date, datetime
 import datetime as datetime2
 import json
+from pprint import pprint
 from flask import Flask, jsonify
 
 from shopify.routes import shopify_bp
 from utils.utils import get_response_by_parameter
 from services.report_service import process_customers_data, \
     convert_utc_to_local_time, get_first_order_date, get_order_dates_by_customer_id, \
-    get_previous_order_params_by_order_id, group_orders_by_customer_id, get_next_order_params_by_order_id, get_total_sales, get_month_of_order
+    get_previous_order_params_by_order_id, group_orders_by_customer_id, get_next_order_params_by_order_id, get_total_sales, get_month_of_order, count_contact_info, get_marketing_consent
 
 app = Flask(__name__)
 app.config.from_object('config.DevelopmentConfig')
@@ -78,6 +79,8 @@ def get_report():
 
     def new_customers():
         for index in customers_with_types_and_aov:
+            index["contact_info"] = count_contact_info(index)
+            index["marketing_consent"] = get_marketing_consent(index)
             index["total_spent"] = float(index["total_spent"])
             item = str(index["id"])
 
